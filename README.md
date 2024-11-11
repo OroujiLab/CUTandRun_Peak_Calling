@@ -9,5 +9,5 @@ If you use the scripts or methods from this repository, please cite the preprint
 
 Benchmarking Peak Calling Methods for CUT&RUN
 
-Amin Nooranikhojasteh, Ghazaleh Tavallaee, Nicholas Khuu and Elias Orouji 
+Amin Nooranikhojasteh, Ghazaleh Tavallaee, and Elias Orouji 
 bioRxiv, 2024. DOI: 
