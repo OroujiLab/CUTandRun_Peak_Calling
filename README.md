@@ -10,4 +10,4 @@ If you use the scripts or methods from this repository, please cite the preprint
 Benchmarking Peak Calling Methods for CUT&RUN
 
 Amin Nooranikhojasteh, Ghazaleh Tavallaee, and Elias Orouji 
-bioRxiv, 2024. DOI: 
+bioRxiv, 2024. DOI: https://doi.org/10.1101/2024.11.13.622880
