@@ -5,7 +5,6 @@ library(ggVennDiagram)
 library(viridis)
 library(gridExtra)
 
-# Define file paths
 file_paths <- list(
   LANCEOTRON = Sys.glob("~/Downloads/Transfers/results_2/LANCEOTRON/*H3K*_R*.bed"),
   MACS2 = c(
@@ -86,7 +85,6 @@ write_bed <- function(gr, filename) {
 
 # Function to create Venn diagram and save overlaps
 create_venn_diagram <- function(method_peaks, histone_mark, sample_name, output_dir) {
-  # Create output directory if it doesn't exist
   dir.create(file.path(output_dir, sample_name, histone_mark), recursive = TRUE, showWarnings = FALSE)
   
   # Convert all peaks to GRanges objects
