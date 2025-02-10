@@ -1,4 +1,3 @@
-# Load required libraries
 library(tidyverse)
 library(GenomicRanges)
 library(ggplot2)
@@ -6,8 +5,6 @@ library(ggVennDiagram)
 library(viridis)
 library(gridExtra)
 
-############### PART 1: SETUP AND BASIC FUNCTIONS ###############
-# Define file paths
 file_paths <- list(
   LANCEOTRON = Sys.glob("~/Downloads/Transfers/results_2/LANCEOTRON/*H3K*_R*.bed"),
   MACS2 = c(
@@ -18,7 +15,6 @@ file_paths <- list(
   SEACR = Sys.glob("~/Downloads/Transfers/results_2/SEACR/*H3K*_R*_stringent*.bed")
 )
 
-# File name parsing functions
 get_sample_info <- function(filename) {
   tryCatch({
     parts <- strsplit(basename(filename), "_")[[1]]
@@ -67,7 +63,6 @@ get_sample_name <- function(filename) {
   })
 }
 
-# Basic file reading functions
 read_peaks <- function(file) {
   peaks <- read_delim(file, delim = "\t", col_names = FALSE, show_col_types = FALSE)
   peaks_subset <- data.frame(
@@ -90,7 +85,6 @@ write_bed <- function(gr, filename) {
 
 # Function to create Venn diagram and save overlaps
 create_venn_diagram <- function(method_peaks, histone_mark, sample_name, output_dir) {
-  # Create output directory if it doesn't exist
   dir.create(file.path(output_dir, sample_name, histone_mark), recursive = TRUE, showWarnings = FALSE)
   
   # Convert all peaks to GRanges objects
@@ -194,7 +188,6 @@ create_venn_diagram <- function(method_peaks, histone_mark, sample_name, output_
     }
   }
   
-  # Print and save combination statistics
   cat("\nConsensus Statistics for each 3-method combination:\n")
   combo_stats <- data.frame()
   for(combo_name in names(combination_consensuses)) {
@@ -208,11 +201,9 @@ create_venn_diagram <- function(method_peaks, histone_mark, sample_name, output_
     ))
   }
   
-  # Save combination statistics
   combo_stats_file <- file.path(output_dir, sample_name, histone_mark, "combination_stats.txt")
   write.table(combo_stats, combo_stats_file, sep="\t", quote=FALSE, row.names=FALSE)
   
-  # Save consensus peaks
   consensus_file <- file.path(output_dir, sample_name, histone_mark, "consensus_peaks.bed")
   write_bed(consensus_regions, consensus_file)
   
@@ -222,15 +213,12 @@ create_venn_diagram <- function(method_peaks, histone_mark, sample_name, output_
     cat(sprintf("%s: %d peaks\n", comparison, overlap_counts[[comparison]]))
   }
   
-  # Print performance metrics
   cat("\nPerformance Metrics (using consensus peaks as ground truth):\n")
   print(metrics)
   
-  # Save metrics to file
   metrics_file <- file.path(output_dir, sample_name, histone_mark, "performance_metrics.txt")
   write.table(metrics, metrics_file, sep="\t", quote=FALSE, row.names=FALSE)
   
-  # Create Venn diagram with viridis colors
   venn_plot <- ggVennDiagram(venn_lists) +
     scale_fill_viridis() +
     labs(title = paste(histone_mark, "-", sample_name)) +
@@ -251,7 +239,6 @@ create_venn_diagram <- function(method_peaks, histone_mark, sample_name, output_
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
   
-  # Save plots as PDFs
   pdf_file <- file.path(output_dir, sample_name, histone_mark, "venn_diagram.pdf")
   pdf(pdf_file, width = 10, height = 8)
   print(venn_plot)
@@ -270,7 +257,6 @@ create_venn_diagram <- function(method_peaks, histone_mark, sample_name, output_
   ))
 }
 
-# Function to analyze peaks for a specific histone mark and sample
 analyze_histone_mark_sample <- function(file_paths, histone_mark, sample_name, output_dir) {
   method_peaks <- list()
   
@@ -308,7 +294,6 @@ generate_peak_analyses <- function(file_paths, output_dir = "peak_analyses") {
   cat("Processing the following samples:", paste(samples, collapse=", "), "\n")
   cat("For histone marks:", paste(histone_marks, collapse=", "), "\n\n")
   
-  # Create main output directory
   dir.create(output_dir, showWarnings = FALSE)
   
   # Store all plots and metrics
@@ -331,7 +316,6 @@ generate_peak_analyses <- function(file_paths, output_dir = "peak_analyses") {
     }
   }
   
-  # Save combined statistics
   write.csv(all_performance_metrics, 
             file.path(output_dir, "all_performance_metrics.csv"), 
             row.names = FALSE)
@@ -365,5 +349,4 @@ generate_peak_analyses <- function(file_paths, output_dir = "peak_analyses") {
   cat("4. all_performance_metrics.pdf - Combined performance plots\n")
 }
 
-# Run the analysis
 generate_peak_analyses(file_paths)

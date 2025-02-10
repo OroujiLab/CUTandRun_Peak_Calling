@@ -1,17 +1,5 @@
 #!/bin/bash
-#SBATCH -J bench_seacr_4D
-#SBATCH -N 1
-#SBATCH -c 1
-#SBATCH -p veryhimem
-#SBATCH --time=3-00:00:00
-#SBATCH --mem=90G
-#SBATCH -o benchmarking_seacr_4D.log
-#SBATCH -e benchmarking_seacr_4D.err
 
-
-
-
-cd /cluster/projects/epigenomics/Aminnn/CNR/EpigenomeLab/EPI_P003_CNR_MM10_07172022/Four_DN/batch_2/sorted_bams/filese_renamed_adjusted/results_2/SEACR
 
 BAM_DIR="/cluster/projects/epigenomics/Aminnn/CNR/EpigenomeLab/EPI_P003_CNR_MM10_07172022/Four_DN/batch_2/sorted_bams/filese_renamed_adjusted"
 OUTPUT_DIR="/cluster/projects/epigenomics/Aminnn/CNR/EpigenomeLab/EPI_P003_CNR_MM10_07172022/Four_DN/batch_2/sorted_bams/filese_renamed_adjusted/results_2/SEACR"
@@ -19,7 +7,6 @@ BEDGRAPH_DIR="${OUTPUT_DIR}/bedgraphs"
 
 mkdir -p "$OUTPUT_DIR" "$BEDGRAPH_DIR"
 
-# find the igg files for the actual samples by name
 find_igg_control() {
     local basename=$1
     local celltype=$(echo $basename | cut -d'_' -f3-)
@@ -37,7 +24,6 @@ find_igg_control() {
     fi
 }
 
-# Function to run SEACR
 run_seacr() {
     local bam_file=$1
     local output_prefix=$2
@@ -77,10 +63,7 @@ for bam_file in ${BAM_DIR}/*.bam; do
         continue
     fi
     
-    # Extract the base name of the file
-    base_name=$(basename "$bam_file" .sorted.bam)
-    
-    # Find matching IgG control
+    base_name=$(basename "$bam_file" .sorted.bam)    
     control_file=$(find_igg_control "$base_name")
     
     echo "Processing file: $bam_file"
