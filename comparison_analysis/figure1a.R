@@ -1,18 +1,3 @@
-# Benchmarking Peak Calling Method for CUT&RUN
-# Manuscript Title: "Benchmarking Peak Calling Methods for CUT&RUN"
-# Figure Number: [Figure 1a]
-
-# Description: This script generates the plots for the distribution of peak numbers in three histone marks using four peak calling methods.
-
-# Notes:
-# - This script is intended for use with data from mouse brain samples with three different histone marks.
-# - The peak calling methods compared include MACS2, SEACR, GoPeaks, and LanceOtron.
-# - Ensure the appropriate input files are loaded for each figure, and customize the parameters as needed.
-
-
-#setwd("~/Desktop/R_scripts/")
-#rm(list = ls())
-
 library(readxl)
 library(dplyr)
 library(ggplot2)
@@ -20,13 +5,8 @@ library(tidyr)
 library(ggstatsplot)
 library(patchwork)
 
-# Load the data from the Excel file
-file_path <- "/Users/elias.orouji/Desktop/R_scripts/final_peak_analysis_summary_all.xlsx"
-# if (file.exists(file_path)) {
-#   data <- read_excel(file_path)
-# } else {
-#   stop("Error: File does not exist; Please check the file path.")
-# }
+file_path <- "!/R_scripts/final_peak_analysis_summary_all.xlsx"
+
 
 colnames(data) <- tolower(colnames(data))
 data <- data %>%
@@ -37,9 +17,7 @@ data <- data %>%
   )
 
 # expected_columns <- c("peak_caller", "histone_mark", "sample", "total_peaks")
-# if (!all(expected_columns %in% colnames(data))) {
-#   stop("Error: Required columns are missing from the data. Please check the data format.")
-# }
+
 
 data$peak_caller <- as.factor(data$peak_caller)
 

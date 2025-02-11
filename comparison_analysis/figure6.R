@@ -1,28 +1,6 @@
-# Benchmarking Peak Calling Method for CUT&RUN
-# Author: Elias Orouji
-# Date: November 9, 2024
-# Manuscript Title: "Benchmarking Peak Calling Methods for CUT&RUN"
-# Figure Number: [Figure 6]
-
-# Description: This script generates ternary plots for precision, recall and F1 score for all the four peak calling methods based on the histone mark tested.
-
-# Notes:
-# - This script is intended for use with data from mouse brain samples with three different histone marks.
-# - The peak calling methods compared include MACS2, SEACR, GoPeaks, and LanceOtron.
-# - Ensure the appropriate input files are loaded for each figure, and customize the parameters as needed.
-
-# Clean up environment
-rm(list = ls())
-
-# Install required packages if they are not already installed
-if (!requireNamespace("ggtern", quietly = TRUE)) install.packages("ggtern")
-if (!requireNamespace("gridExtra", quietly = TRUE)) install.packages("gridExtra")
-
-# Load necessary libraries
 library(ggtern)
 library(gridExtra)
 
-# Create data frames for each plot
 data_precision <- data.frame(
   H3K27ac = c(0.316741, 0.314521, 0.282387, 0.170911, 0.308261, 0.198829, 0.269176, 0.194383, 0.288525, 0.314426, 0.267023, 0.183279, 0.301659, 0.292911, 0.252298, 0.178029, 0.269618, 0.220763, 0.290771, 0.261804),
   H3K4me3 = c(0.286303, 0.184429, 0.282965, 0.282965, 0.298705, 0.173790, 0.275330, 0.272852, 0.313443, 0.244059, 0.272331, 0.272059, 0.272398, 0.244893, 0.276014, 0.276014, 0.286107, 0.290139, 0.282160, 0.185751),
@@ -47,7 +25,6 @@ data_f1 <- data.frame(
   Label = rep(c("GoPeaks", "LanceOtron", "MACS2", "SEACR"), 5)
 )
 
-# Function to create ternary plots
 create_ternary_plot <- function(data, title) {
   ggtern(data = data, aes(x = H3K27ac, y = H3K4me3, z = H3K27me3)) +
     geom_point(aes(color = Color), size = 5, alpha = 0.8) +
@@ -69,13 +46,10 @@ create_ternary_plot <- function(data, title) {
     theme_showgrid()
 }
 
-# Generate each plot individually
 plot1 <- create_ternary_plot(data_precision, "Peak Caller's Precision for Each Histone Mark")
 print(plot1)
-
 plot2 <- create_ternary_plot(data_recall, "Peak Caller's Recall for Each Histone Mark")
 print(plot2)
-
 plot3 <- create_ternary_plot(data_f1, "Peak Caller's F1 Score for Each Histone Mark")
 print(plot3)
 

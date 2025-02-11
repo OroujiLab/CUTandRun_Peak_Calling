@@ -1,30 +1,11 @@
-# Benchmarking Peak Calling Method for CUT&RUN
-# Manuscript Title: "Benchmarking Peak Calling Methods for CUT&RUN"
-# Figure Number: [Figure 5]
-
-# Description: This script generates the plots for precision, recall and F1 score for all four peak calling methods based on the histone mark tested.
-
-# Notes:
-# - This script is intended for use with data from mouse brain samples with three different histone marks.
-# - The peak calling methods compared include MACS2, SEACR, GoPeaks, and LanceOtron.
-# - Ensure the appropriate input files are loaded for each figure, and customize the parameters as needed.
-
-# Clean up environment
-#rm(list = ls())
-
 library(tidyverse)
 library(readxl)
 library(ggpubr)
 
 setwd("~/Desktop/R_scripts/")
 
-# Load the data
 file_path <- "all_performance_metrics.xlsx"
 data <- read_excel(file_path)
-
-
-head(data)
-
 data <- data %>% rename(Score = F1)
 
 data_f1 <- data %>% select(Method, Score, HistoneMark) %>% mutate(Metric = "F1")
@@ -45,9 +26,6 @@ plot_f1_histone <- plot_metric_by_histone(data_f1, "F1")
 plot_precision_histone <- plot_metric_by_histone(data_precision, "Precision")
 plot_recall_histone <- plot_metric_by_histone(data_recall, "Recall")
 
-# Arrange the plots
 ggarrange(plot_f1_histone, plot_precision_histone, plot_recall_histone, ncol = 1, nrow = 3)
-
-# Save the plots to a file
 ggsave("performance_metrics_comparison_by_histone.png", width = 12, height = 18)
 

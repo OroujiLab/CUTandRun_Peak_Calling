@@ -1,4 +1,3 @@
-############### PART 1: SETUP AND BASIC FUNCTIONS ###############
 library(tidyverse)
 library(GenomicRanges)
 library(ComplexUpset)
@@ -77,7 +76,6 @@ read_peaks <- function(file) {
   return(peaks_subset)
 }
 
-# Convert peaks to GRanges
 df_to_granges <- function(df) {
   GRanges(
     seqnames = df$chr,
@@ -85,31 +83,25 @@ df_to_granges <- function(df) {
   )
 }
 
-# Test function
-test_name_extraction <- function(filename) {
-  info <- get_sample_info(filename)
-  cat("File:", filename, "\n")
-  cat("ID:", info$ID, "\n")
-  cat("Histone Mark:", info$HistoneMark, "\n")
-  cat("Sample:", info$Sample, "\n")
-  cat("Replicate:", info$Replicate, "\n\n")
-  
-  # Also test get_sample_name
-  sample <- get_sample_name(filename)
-  cat("get_sample_name result:", sample, "\n")
-  cat("------------------\n")
-}
 
+#test_name_extraction <- function(filename) {
+#  info <- get_sample_info(filename)
+#  cat("File:", filename, "\n")
+#  cat("ID:", info$ID, "\n")
+#  cat("Histone Mark:", info$HistoneMark, "\n")
+#  cat("Sample:", info$Sample, "\n")
+#  cat("Replicate:", info$Replicate, "\n\n")
+#  
+#  # Also test get_sample_name
+#  sample <- get_sample_name(filename)
+#  cat("get_sample_name result:", sample, "\n")
+#  cat("------------------\n")
+#}
 
-############### PART 2: PEAK ANALYSIS FUNCTIONS ###############
-
-# Main analysis function for each histone mark and sample
 analyze_histone_mark_sample <- function(file_paths, histone_mark, sample_name) {
   results <- list()
   method_peaks <- list()
   method_peak_counts <- list()
-  
-  # First collect peaks from all methods
   for (method in names(file_paths)) {
     files <- file_paths[[method]]
     # Modified pattern to match ID_histone_sample_R format
@@ -137,8 +129,6 @@ analyze_histone_mark_sample <- function(file_paths, histone_mark, sample_name) {
     return(NULL)
   }
   
-  # Calculate unique peaks for each method
-  cat("\nFinding unique peaks...\n")
   for (method in methods) {
     current_df <- method_peaks[[method]]
     other_peaks <- do.call(rbind, method_peaks[names(method_peaks) != method])
@@ -156,9 +146,6 @@ analyze_histone_mark_sample <- function(file_paths, histone_mark, sample_name) {
     
     results[[paste0(method, "_unique")]] <- nrow(unique_peaks)
   }
-  
-  # Calculate pairwise overlaps
-  cat("Finding pairwise overlaps...\n")
   for (i in 1:(length(methods)-1)) {
     for (j in (i+1):length(methods)) {
       method1 <- methods[i]
@@ -174,8 +161,6 @@ analyze_histone_mark_sample <- function(file_paths, histone_mark, sample_name) {
       cat(sprintf("%s-%s shared peaks: %d\n", method1, method2, overlap_count))
     }
   }
-  
-  # Calculate three-way overlaps
   if (length(methods) >= 3) {
     cat("Finding three-way overlaps...\n")
     combinations <- combn(methods, 3, simplify = FALSE)
@@ -189,11 +174,9 @@ analyze_histone_mark_sample <- function(file_paths, histone_mark, sample_name) {
       gr2 <- df_to_granges(method_peaks[[method2]])
       gr3 <- df_to_granges(method_peaks[[method3]])
       
-      # Find overlaps between first two methods
       overlaps_12 <- findOverlaps(gr1, gr2)
       shared_gr_12 <- gr1[unique(queryHits(overlaps_12))]
       
-      # Find overlaps with third method
       overlaps_123 <- findOverlaps(shared_gr_12, gr3)
       overlap_count <- length(unique(queryHits(overlaps_123)))
       
@@ -203,15 +186,10 @@ analyze_histone_mark_sample <- function(file_paths, histone_mark, sample_name) {
     }
   }
   
-  # Calculate consensus peaks
   if (length(methods) >= 2) {
     cat("Finding consensus peaks...\n")
     gr_list <- lapply(methods, function(m) df_to_granges(method_peaks[[m]]))
-    
-    # Start with first set
     consensus_gr <- gr_list[[1]]
-    
-    # Iteratively find overlaps with each remaining set
     for (i in 2:length(gr_list)) {
       overlaps <- findOverlaps(consensus_gr, gr_list[[i]])
       consensus_gr <- consensus_gr[unique(queryHits(overlaps))]
@@ -223,22 +201,16 @@ analyze_histone_mark_sample <- function(file_paths, histone_mark, sample_name) {
     cat(sprintf("Consensus peaks (shared among all methods): %d\n", length(consensus_gr)))
   }
   
-  # Generate output files
-  cat("\nGenerating output files...\n")
   generate_peak_files(method_peaks, results, histone_mark, sample_name)
-  
-  # Write results to CSV
   csv_file_path <- sprintf("%s_%s_peaks_summary.csv", sample_name, histone_mark)
   write_results_to_csv(results, method_peak_counts, histone_mark, sample_name, csv_file_path)
   
   return(list(results = results, method_peak_counts = method_peak_counts))
 }
 
-# Function to check available files and potential issues
+
 check_available_files <- function(file_paths) {
   cat("\nChecking available files:\n")
-  cat("=======================\n")
-  
   for (method in names(file_paths)) {
     files <- file_paths[[method]]
     cat(sprintf("\nMethod: %s\n", method))
@@ -247,8 +219,6 @@ check_available_files <- function(file_paths) {
       cat(sprintf("- %s\n", basename(file)))
     }
   }
-  
-  # Check for potential duplicates
   all_files <- unlist(file_paths)
   all_bases <- sapply(all_files, function(f) {
     info <- get_sample_info(f)
@@ -264,24 +234,14 @@ check_available_files <- function(file_paths) {
   }
 }
 
-
-
-############### PART 3: FILE GENERATION FUNCTIONS ###############
-
-# Function to write peaks to BED format
 write_peaks_to_bed <- function(peaks_df, file_path) {
   write.table(peaks_df, file = file_path, 
               sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
 }
 
-# Function to generate all peak files
 generate_peak_files <- function(method_peaks, results, histone_mark, sample_name) {
-  # Create output directory if it doesn't exist
   dir.create("peak_files", showWarnings = FALSE)
-  
   methods <- names(method_peaks)
-  
-  # Function to get peaks from GRanges object
   granges_to_df <- function(gr) {
     data.frame(
       chr = seqnames(gr),
@@ -290,8 +250,7 @@ generate_peak_files <- function(method_peaks, results, histone_mark, sample_name
     )
   }
   
-  # 1. Generate unique peak files for each method
-  cat("\nGenerating unique peak files...\n")
+  #Generate unique peak files 
   for (method in methods) {
     current_df <- method_peaks[[method]]
     other_peaks <- do.call(rbind, method_peaks[names(method_peaks) != method])
@@ -313,8 +272,7 @@ generate_peak_files <- function(method_peaks, results, histone_mark, sample_name
                 nrow(unique_peaks), method, file_path))
   }
   
-  # 2. Generate pairwise shared peak files
-  cat("\nGenerating pairwise shared peak files...\n")
+  #Generate pairwise shared peak file
   for (i in 1:(length(methods)-1)) {
     for (j in (i+1):length(methods)) {
       method1 <- methods[i]
@@ -333,10 +291,7 @@ generate_peak_files <- function(method_peaks, results, histone_mark, sample_name
                   nrow(shared_peaks), method1, method2, file_path))
     }
   }
-  
-  # 3. Generate three-way shared peak files
   if (length(methods) >= 3) {
-    cat("\nGenerating three-way shared peak files...\n")
     combinations <- combn(methods, 3, simplify = FALSE)
     
     for (combo in combinations) {
@@ -347,12 +302,8 @@ generate_peak_files <- function(method_peaks, results, histone_mark, sample_name
       gr1 <- df_to_granges(method_peaks[[method1]])
       gr2 <- df_to_granges(method_peaks[[method2]])
       gr3 <- df_to_granges(method_peaks[[method3]])
-      
-      # Find overlaps between first two methods
       overlaps_12 <- findOverlaps(gr1, gr2)
       shared_gr_12 <- gr1[unique(queryHits(overlaps_12))]
-      
-      # Find overlaps with third method
       overlaps_123 <- findOverlaps(shared_gr_12, gr3)
       shared_peaks <- granges_to_df(shared_gr_12[unique(queryHits(overlaps_123))])
       
@@ -363,16 +314,9 @@ generate_peak_files <- function(method_peaks, results, histone_mark, sample_name
                   nrow(shared_peaks), method1, method2, method3, file_path))
     }
   }
-  
-  # 4. Generate consensus peak file
   if (length(methods) >= 2) {
-    cat("\nGenerating consensus peak file...\n")
     gr_list <- lapply(methods, function(m) df_to_granges(method_peaks[[m]]))
-    
-    # Start with first set
     consensus_gr <- gr_list[[1]]
-    
-    # Iteratively find overlaps with each remaining set
     for (i in 2:length(gr_list)) {
       overlaps <- findOverlaps(consensus_gr, gr_list[[i]])
       consensus_gr <- consensus_gr[unique(queryHits(overlaps))]
@@ -390,24 +334,18 @@ generate_peak_files <- function(method_peaks, results, histone_mark, sample_name
     }
   }
 }
-
-# Function to write results to CSV
 write_results_to_csv <- function(results, method_peak_counts, histone_mark, sample_name, file_path) {
   csv_data <- data.frame(
     Measure = character(),
     Value = integer(),
     stringsAsFactors = FALSE
   )
-  
-  # Add total peaks for each method
   for (method in names(method_peak_counts)) {
     csv_data <- rbind(csv_data, data.frame(
       Measure = paste(method, "Total Peaks"),
       Value = method_peak_counts[[method]]
     ))
   }
-  
-  # Add unique peaks for each method
   unique_measures <- grep("_unique$", names(results), value = TRUE)
   for (measure in unique_measures) {
     csv_data <- rbind(csv_data, data.frame(
@@ -415,8 +353,6 @@ write_results_to_csv <- function(results, method_peak_counts, histone_mark, samp
       Value = results[[measure]]
     ))
   }
-  
-  # Add pairwise overlaps
   pairwise_measures <- grep("_shared$", names(results), value = TRUE)
   pairwise_measures <- pairwise_measures[!grepl("_[^_]+_[^_]+_[^_]+_shared$", pairwise_measures)]
   for (measure in pairwise_measures) {
@@ -425,8 +361,6 @@ write_results_to_csv <- function(results, method_peak_counts, histone_mark, samp
       Value = results[[measure]]
     ))
   }
-  
-  # Add three-way overlaps
   threeway_measures <- grep("_shared$", names(results), value = TRUE)
   threeway_measures <- threeway_measures[grepl("_[^_]+_[^_]+_[^_]+_shared$", threeway_measures)]
   for (measure in threeway_measures) {
@@ -435,8 +369,6 @@ write_results_to_csv <- function(results, method_peak_counts, histone_mark, samp
       Value = results[[measure]]
     ))
   }
-  
-  # Add consensus peaks if available
   if ("consensus" %in% names(results)) {
     csv_data <- rbind(csv_data, data.frame(
       Measure = "Consensus Peaks",
@@ -448,35 +380,16 @@ write_results_to_csv <- function(results, method_peak_counts, histone_mark, samp
   cat(sprintf("Results written to %s\n", file_path))
 }
 
-
-############### PART 4: UPSET PLOT CREATION ###############
-
 create_histone_upset <- function(results_data, histone_mark, sample_name) {
   results_mark <- results_data$results
   method_peak_counts <- results_data$method_peak_counts
   methods <- names(method_peak_counts)
-  
-  # Check if we have enough methods for comparison
-  if (length(methods) < 2) {
-    cat(sprintf("\nWarning: Only found data from %d method(s) for %s - %s. Skipping UpSet plot.\n", 
-                length(methods), histone_mark, sample_name))
-    cat("Available methods:", paste(methods, collapse = ", "), "\n")
-    return(NULL)
-  }
-  
-  # Calculate total peaks for each method
   total_peaks_per_method <- unlist(method_peak_counts)
-  
-  # Create the data frame for the UpSet plot
   peak_df <- data.frame(matrix(0, nrow = max(sum(total_peaks_per_method), 1), ncol = length(methods)))
   colnames(peak_df) <- methods
   current_row <- 1
-  
-  # Fill in the data frame
-  # Initialize a counter for actual rows filled
   actual_rows_filled <- 0
-  
-  # Consensus (shared among all methods)
+
   if ("consensus" %in% names(results_mark) && results_mark[["consensus"]] > 0) {
     n_consensus <- results_mark[["consensus"]]
     if (current_row + n_consensus - 1 <= nrow(peak_df)) {
@@ -486,7 +399,6 @@ create_histone_upset <- function(results_data, histone_mark, sample_name) {
     }
   }
   
-  # Three-way shared peaks
   three_way_shared <- grep("_shared$", names(results_mark), value = TRUE)
   three_way_shared <- three_way_shared[grepl("^[^_]+_[^_]+_[^_]+_shared$", three_way_shared)]
   for (key in three_way_shared) {
@@ -501,7 +413,6 @@ create_histone_upset <- function(results_data, histone_mark, sample_name) {
     }
   }
   
-  # Two-way shared peaks
   two_way_shared <- grep("_shared$", names(results_mark), value = TRUE)
   two_way_shared <- two_way_shared[!grepl("_[^_]+_[^_]+_[^_]+_shared$", two_way_shared)]
   for (key in two_way_shared) {
@@ -516,7 +427,6 @@ create_histone_upset <- function(results_data, histone_mark, sample_name) {
     }
   }
   
-  # Unique peaks
   for (method in methods) {
     unique_key <- paste0(method, "_unique")
     if (unique_key %in% names(results_mark)) {
@@ -531,7 +441,6 @@ create_histone_upset <- function(results_data, histone_mark, sample_name) {
     }
   }
   
-  # Trim the data frame to actual size
   if (actual_rows_filled > 0) {
     peak_df <- peak_df[1:actual_rows_filled, , drop = FALSE]
   } else {
@@ -590,21 +499,15 @@ create_histone_upset <- function(results_data, histone_mark, sample_name) {
   })
 }
 
-############### PART 5: MAIN ANALYSIS RUNNER ###############
-
 run_complete_analysis <- function(file_paths, 
                                   histone_marks = c("H3K27me3", "H3K27ac", "H3K4me3")) {
   all_results <- list()
   upset_results <- list()
   
-  # Get all unique samples from the files
   all_files <- unlist(file_paths)
   samples <- unique(sapply(all_files, get_sample_name))
   samples <- samples[!is.na(samples)]
   
-  # Initial file check
-  cat("\nChecking available files:\n")
-  cat("=======================\n")
   for (mark in histone_marks) {
     for (sample in samples) {
       method_count <- 0
@@ -624,7 +527,6 @@ run_complete_analysis <- function(file_paths,
     }
   }
   
-  # Process each histone mark and sample
   for (mark in histone_marks) {
     all_results[[mark]] <- list()
     upset_results[[mark]] <- list()
@@ -643,21 +545,15 @@ run_complete_analysis <- function(file_paths,
       if (!is.null(results)) {
         all_results[[mark]][[sample]] <- results
         upset_results[[mark]][[sample]] <- create_histone_upset(results, mark, sample)
-        
-        # Print comprehensive results summary
         cat(sprintf("\nResults for %s - %s:\n", sample, mark))
-        cat("==========================\n")
         
         if (!is.null(results$results)) {
-          # Print unique peaks
-          cat("\nUnique peaks:\n")
           for (method in names(file_paths)) {
             if (paste0(method, "_unique") %in% names(results$results)) {
               cat(sprintf("%s: %d\n", method, results$results[[paste0(method, "_unique")]]))
             }
           }
-          
-          # Print pairwise shared peaks
+        
           shared_pairs <- grep("_shared$", names(results$results), value = TRUE)
           shared_pairs <- shared_pairs[!grepl("_[^_]+_[^_]+_[^_]+_shared$", shared_pairs)]
           if (length(shared_pairs) > 0) {
@@ -668,7 +564,6 @@ run_complete_analysis <- function(file_paths,
             }
           }
           
-          # Print three-way shared peaks
           three_way_shared <- grep("_shared$", names(results$results), value = TRUE)
           three_way_shared <- three_way_shared[grepl("^[^_]+_[^_]+_[^_]+_shared$", three_way_shared)]
           if (length(three_way_shared) > 0) {
@@ -685,8 +580,6 @@ run_complete_analysis <- function(file_paths,
                         results$results[["consensus"]]))
           }
         }
-        
-        cat("\n---------------------------\n")
       }
     }
   }
@@ -697,7 +590,7 @@ run_complete_analysis <- function(file_paths,
   ))
 }
 
-# Run the analysis
+
 results <- tryCatch({
   run_complete_analysis(file_paths)
 }, error = function(e) {

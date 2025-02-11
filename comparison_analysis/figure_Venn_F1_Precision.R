@@ -342,11 +342,11 @@ generate_peak_analyses <- function(file_paths, output_dir = "peak_analyses") {
   }
   
   cat("\nAnalyses completed. Results saved in:", output_dir, "\n")
-  cat("\nGenerated files:\n")
-  cat("1. all_performance_metrics.csv - Combined performance metrics for all samples\n")
-  cat("2. all_combination_stats.csv - Statistics for all 3-method combinations\n")
-  cat("3. all_venn_diagrams.pdf - Combined Venn diagrams\n")
-  cat("4. all_performance_metrics.pdf - Combined performance plots\n")
+  #cat("\nGenerated files:\n")
+  #cat("1. all_performance_metrics.csv - Combined performance metrics for all samples\n")
+  #cat("2. all_combination_stats.csv - Statistics for all 3-method combinations\n")
+  #cat("3. all_venn_diagrams.pdf - Combined Venn diagrams\n")
+  #cat("4. all_performance_metrics.pdf - Combined performance plots\n")
 }
 
 generate_peak_analyses(file_paths)
