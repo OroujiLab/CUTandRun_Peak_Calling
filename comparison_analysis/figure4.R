@@ -19,7 +19,7 @@ file_paths <- list(
 get_sample_info <- function(filename) {
   tryCatch({
     parts <- strsplit(basename(filename), "_")[[1]]
-    id <- parts[1]  # Gets "4DNFI258RO3L"
+    id <- parts[1]  # Gets "4DN..."
     histone_idx <- grep("H3K", parts)[1]
     replicate_idx <- grep("^R\\d+", parts)[1]
     
@@ -27,9 +27,9 @@ get_sample_info <- function(filename) {
       stop("Invalid filename format")
     }
     
-    histone <- parts[histone_idx]  # Gets "H3K27ac"
+    histone <- parts[histone_idx]  # Gets "histone mark"
     sample_name <- paste(parts[(histone_idx + 1):(replicate_idx - 1)], collapse = "_")  # Gets "H1_ESC"
-    replicate <- parts[replicate_idx]  # Gets "R1"
+    replicate <- parts[replicate_idx]  # Gets "replicate number"
     
     return(list(
       ID = id,
@@ -59,7 +59,7 @@ get_sample_name <- function(filename) {
     sample_name <- paste(parts[(histone_idx + 1):(replicate_idx - 1)], collapse = "_")
     return(sample_name)
   }, error = function(e) {
-    warning(sprintf("Error getting sample name from %s: %s", filename, e$message))
+    warning(sprintf("impossible to get sample name from %s: %s", filename, e$message))
     return(NA_character_)
   })
 }
