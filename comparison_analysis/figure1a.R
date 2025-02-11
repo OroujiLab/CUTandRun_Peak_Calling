@@ -5,31 +5,36 @@ library(tidyr)
 library(ggstatsplot)
 library(patchwork)
 
-file_path <- "!/R_scripts/final_peak_analysis_summary_all.xlsx"
+# Set file path and read data
+file_path <- "~/Downloads/final_peak_analysis_summary_all.csv"
+if (!file.exists(file_path)) {
+  stop("File not found: ", file_path)
+}
 
-
+# Read the data
+data <- read.csv(file_path)
 colnames(data) <- tolower(colnames(data))
-data <- data %>%
-  rename(
-    peak_caller = method,
-    histone_mark = histone,
-    sample = sample
-  )
 
-# expected_columns <- c("peak_caller", "histone_mark", "sample", "total_peaks")
+# Convert method to factor
+data$method <- as.factor(data$method)
+histone_marks <- unique(data$histone)
 
-
-data$peak_caller <- as.factor(data$peak_caller)
-
-histone_marks <- unique(data$histone_mark)
+# Open PDF device
+pdf("figure1_adjusted.pdf", width=11, height=8)
 
 for (mark in histone_marks) {
-  mark_data <- data %>% filter(histone_mark == mark)
+  mark_data <- data %>% filter(histone == mark)
+  
+  if (nrow(mark_data) == 0) {
+    warning(paste("No data found for histone mark:", mark))
+    next
+  }
+  
   plot <- ggbetweenstats(
     data = mark_data,
-    x = peak_caller,
+    x = method,
     y = total_peaks,
-    fill = peak_caller,
+    fill = method,
     pairwise.comparisons = TRUE,
     pairwise.display = "significant",
     p.adjust.method = "fdr",
@@ -37,7 +42,6 @@ for (mark in histone_marks) {
     xlab = "Peak Caller",
     ylab = "Total Number of Peaks",
     ggtheme = ggplot2::theme_minimal(),
-    package = "RColorBrewer",
     palette = "Set3",
     type = "parametric",
     plotgrid.args = list(ncol = 2),
@@ -45,9 +49,20 @@ for (mark in histone_marks) {
   ) +
     theme(
       plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      legend.position = "bottom"
+      axis.title.x = element_text(face = "bold"),
+      axis.title.y = element_text(face = "bold"),
+      axis.text.x = element_text(angle = 45, hjust = 1, face = "bold"),
+      axis.text.y = element_text(face = "bold"),
+      legend.title = element_text(face = "bold"),
+      legend.text = element_text(face = "bold"),
+      legend.position = "bottom",
+      plot.subtitle = element_text(face = "bold"),
+      plot.caption = element_text(face = "bold")
     )
+  
   print(plot)
+  gc()
 }
 
+# Close PDF device
+dev.off()
