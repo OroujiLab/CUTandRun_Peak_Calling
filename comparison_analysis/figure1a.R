@@ -5,21 +5,21 @@ library(tidyr)
 library(ggstatsplot)
 library(patchwork)
 
-# Set file path and read data
+
 file_path <- "~/Downloads/final_peak_analysis_summary_all.csv"
 if (!file.exists(file_path)) {
   stop("File not found: ", file_path)
 }
 
-# Read the data
+
 data <- read.csv(file_path)
 colnames(data) <- tolower(colnames(data))
 
-# Convert method to factor
+
 data$method <- as.factor(data$method)
 histone_marks <- unique(data$histone)
 
-# Open PDF device
+
 pdf("figure1_adjusted.pdf", width=11, height=8)
 
 for (mark in histone_marks) {
@@ -63,6 +63,4 @@ for (mark in histone_marks) {
   print(plot)
   gc()
 }
-
-# Close PDF device
 dev.off()
