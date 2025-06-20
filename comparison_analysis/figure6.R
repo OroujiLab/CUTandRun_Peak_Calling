@@ -1,72 +1,31 @@
-library(ggtern)
-library(gridExtra)
-library(dplyr)
-library(tidyr)
-library(patchwork)
+library(tidyverse)
+library(readxl)
+library(ggpubr)
 
-data <- read.csv("all_performance_metrics.csv")
-create_ternary_data <- function(data, metric_col) {
-  histone_marks <- c("H3K27ac", "H3K4me3", "H3K27me3")
-  
-  # Normalize the data for ternary plot
-  normalized_data <- data %>%
-    filter(HistoneMark %in% histone_marks) %>%
-    select(Sample, HistoneMark, Method, all_of(metric_col)) %>%
-    group_by(Sample, Method) %>%
-    mutate(
-      metric_sum = sum(.data[[metric_col]], na.rm = TRUE),
-      normalized_value = ifelse(metric_sum == 0, 0, .data[[metric_col]] / metric_sum)
-    ) %>%
-    ungroup() %>%
-    select(Sample, HistoneMark, Method, normalized_value) %>%
-    tidyr::pivot_wider(
-      names_from = HistoneMark, 
-      values_from = normalized_value,
-      values_fill = 0
-    ) %>%
-    mutate(Method = case_when(
-      Method == "GOPEAKS" ~ "GoPeaks",
-      Method == "LANCEOTRON" ~ "LanceOtron",
-      TRUE ~ Method
-    ))
-  return(normalized_data)
+setwd("~/Desktop/R_scripts/")
+
+file_path <- "all_performance_metrics.xlsx"
+data <- read_excel(file_path)
+data <- data %>% rename(Score = F1)
+
+data_f1 <- data %>% select(Method, Score, HistoneMark) %>% mutate(Metric = "F1")
+data_precision <- data %>% select(Method, Precision, HistoneMark) %>% rename(Score = Precision) %>% mutate(Metric = "Precision")
+data_recall <- data %>% select(Method, Recall, HistoneMark) %>% rename(Score = Recall) %>% mutate(Metric = "Recall")
+
+plot_metric_by_histone <- function(data, metric_name) {
+  ggboxplot(data, x = "Method", y = "Score", fill = "Method", palette = "jco", facet.by = "HistoneMark") +
+    stat_compare_means(method = "anova", label = "p.format", label.y = max(data$Score, na.rm = TRUE) * 1.1) +
+    stat_compare_means(comparisons = list(c("GOPEAKS", "LANCEOTRON"), c("GOPEAKS", "MACS2"), c("GOPEAKS", "SEACR"),
+                                          c("LANCEOTRON", "MACS2"), c("LANCEOTRON", "SEACR"), c("MACS2", "SEACR")),
+                       method = "t.test", label = "p.signif", na.rm = TRUE, label.y.npc = "top", label.size = 3) +
+    labs(title = paste("Average", metric_name, "Score by Method and Histone Mark"), y = paste(metric_name, "Score"), x = "Method") +
+    theme_minimal()
 }
 
-create_ternary_plot <- function(data, title) {
-  ggtern(data = data, aes(x = H3K27ac, y = H3K4me3, z = H3K27me3)) +
-    geom_point(aes(color = Method), size = 5, alpha = 0.8) +
-    scale_color_manual(
-      name = "Method",
-      values = c("GoPeaks" = "#1f78b4", "LanceOtron" = "#ffcc00", 
-                 "MACS2" = "#4d4d4d", "SEACR" = "#e31a1c")
-    ) +
-    labs(
-      title = title,
-      x = "H3K27ac",
-      y = "H3K4me3",
-      z = "H3K27me3"
-    ) +
-    theme_minimal() +
-    theme(
-      plot.title = element_text(size = 18, face = "bold", hjust = 0.5),
-      axis.title = element_text(size = 16),
-      axis.text = element_text(size = 12),
-      legend.title = element_text(size = 16),
-      legend.text = element_text(size = 14),
-      legend.position = "bottom",
-      plot.margin = margin(20, 35, 20, 20) 
-    ) +
-    theme_showgrid()
-}
-data_precision <- create_ternary_data(data, "Precision")
-data_recall <- create_ternary_data(data, "Recall")
-data_f1 <- create_ternary_data(data, "F1")
+plot_f1_histone <- plot_metric_by_histone(data_f1, "F1")
+plot_precision_histone <- plot_metric_by_histone(data_precision, "Precision")
+plot_recall_histone <- plot_metric_by_histone(data_recall, "Recall")
 
-plot1 <- create_ternary_plot(data_precision, "Precision")
-plot2 <- create_ternary_plot(data_recall, "Recall") 
-plot3 <- create_ternary_plot(data_f1, "F1 Score")
+ggarrange(plot_f1_histone, plot_precision_histone, plot_recall_histone, ncol = 1, nrow = 3)
+ggsave("performance_metrics_comparison_by_histone.png", width = 12, height = 18)
 
-combined_plot <- plot1 + plot2 + plot3 + 
-  plot_layout(guides = "collect") &
-  theme(legend.position = "bottom")
-ggsave("ternary_plots_combined.pdf", combined_plot, width = 18, height = 7)
