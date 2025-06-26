@@ -7,7 +7,7 @@ Cleavage Under Targets and Release Using Nuclease (CUT&RUN) has rapidly gained p
 
 # Citation:
 
-If you use the scripts or methods from this repository, please cite the preprint:
+If you use the scripts or methods from this repository, please cite the paper:
 
 Benchmarking Peak Calling Methods for CUT&RUN
 
