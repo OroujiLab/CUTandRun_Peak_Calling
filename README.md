@@ -12,6 +12,7 @@ If you use the scripts or methods from this repository, please cite the paper:
 Benchmarking Peak Calling Methods for CUT&RUN
 
 Amin Nooranikhojasteh, Ghazaleh Tavallaee, and Elias Orouji 
+
 Bioinformatics, 2025. DOI: https://doi.org/10.1093/bioinformatics/btaf375
 
 
